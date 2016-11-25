@@ -8,14 +8,14 @@ public class Action implements sut.interfaces.Action {
 	private String methodName;
 	private ArrayList<Parameter> parameter;
 
-	@Override
+
 	public String getMethodName() {
 		return this.methodName;
 	}
 
 	public List<Parameter> getParameter() {
 		// TODO Auto-generated method stub
-		return new ArrayList<>(this.parameter);
+		return new ArrayList<Parameter>(this.parameter);
 	}
 
 	public List<sut.interfaces.Parameter> getParams() {

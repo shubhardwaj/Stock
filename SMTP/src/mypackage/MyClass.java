@@ -7,7 +7,6 @@ import sut.interfaces.SutInterface;
 
 public class MyClass implements SutInterface {
 // later need to implement
-	@Override
 	public OutputActions sendInput(InputAction paramInputAction) {
 		// TODO Auto-generated method stub
 		return null;
@@ -31,7 +30,7 @@ public OutputAction processSymbol(InputAction localInputAction){
 //		return 400;
 //	}
 //	}
-	@Override
+	
 	public void sendReset() {
 		// TODO Auto-generated method stub
 		
