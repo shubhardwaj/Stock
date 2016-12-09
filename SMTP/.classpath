@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="Lib/javax.mail-0.4-incubating-sources.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/lib/dsn.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/lib/imap.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/lib/mailapi.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/lib/pop3.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/lib/smtp.jar"/>
-	<classpathentry kind="lib" path="D:/MasterThesis/workspace/javamail-1.4.5/mail.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

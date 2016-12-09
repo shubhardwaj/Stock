@@ -1,4 +1,4 @@
-package mypackage;
+package smtplearning;
 
 public class Parameter implements sut.interfaces.Parameter {
 private int value;
@@ -24,5 +24,9 @@ public Parameter(int value, int parameterIndex)
   this.value = value;
   this.parameterIndex = parameterIndex;
 }
-
+public Parameter(int value, int parameterIndex, Action action){
+	this.value= value;
+	this.parameterIndex= parameterIndex;
+	this.action= action;
+}
 }

@@ -1,13 +1,13 @@
-package mypackage;
+package smtplearning;
 
 import sut.interfaces.InputAction;
 
-import sut.interfaces.OutputActions;
+import sut.interfaces.OutputAction;
 import sut.interfaces.SutInterface;
 
 public class MyClass implements SutInterface {
 // later need to implement
-	public OutputActions sendInput(InputAction paramInputAction) {
+	public OutputAction sendInput(InputAction paramInputAction) {
 		// TODO Auto-generated method stub
 		return null;
 	}

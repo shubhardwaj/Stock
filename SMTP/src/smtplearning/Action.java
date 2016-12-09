@@ -1,9 +1,9 @@
-package mypackage;
+package smtplearning;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Action implements sut.interfaces.Action {
+public abstract class Action implements sut.interfaces.Action {
 
 	private String methodName;
 	private ArrayList<Parameter> parameter;

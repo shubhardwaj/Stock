@@ -1,8 +1,8 @@
-package mypackage;
+package smtplearning;
 
 import java.util.List;
 
-public class OutputAction extends Action implements sut.interfaces.InputAction {
+public class OutputAction extends Action implements sut.interfaces.OutputAction {
 
 	public OutputAction(String paramAction, List<Parameter> list) {
 		super(paramAction, list);
