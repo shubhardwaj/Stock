@@ -3,6 +3,7 @@ package smtplearning;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
@@ -12,58 +13,44 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.text.ChangedCharSetException;
+
 public class SMTP extends Thread {
 
 	public static final int SOCKET_READ_TIMEOUT = 60 * 1000;
 
 	private String hostname;
 	private int port;
-	private String recipient;
-	private String sender;
-	private String subject;
-	private String message;
 
 	protected Socket smtpSocket;
 	protected BufferedReader in;
 	protected OutputStreamWriter out;
-	public SMTP(){}
-	public SMTP(String hostname, int port, String recipient, String sender, String subject, String message) {
-		this.hostname = hostname;
-		this.port = port;
-		this.recipient = recipient;
-		this.message = message;
-		this.subject = subject;
-		this.sender = sender;
+
+	public SMTP() {
 	}
-public SMTP(SMTP smtp, Socket paramSocket, BufferedReader paramBufferedReader, PrintWriter paramPrintWriter){
-		try{
-		connect();
-		}catch(IOException e){
-			System.out.println(e);
-		}
-}
+
 	public SMTP(String hostname, int port) {
 		this.hostname = hostname;
 		this.port = port;
 	}
-	
+
 	protected synchronized boolean connect() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
 		try {
 			smtpSocket = new Socket(hostname, port);
+			smtpSocket.isConnected();
 			smtpSocket.setSoTimeout(SOCKET_READ_TIMEOUT);
 			in = new BufferedReader(new InputStreamReader(smtpSocket.getInputStream()));
 			out = new OutputStreamWriter(smtpSocket.getOutputStream());
-			if (in.readLine() == null) {
-				System.out.println("Hostname to connect server do not found");
+			if (in.readLine() == null && !(smtpSocket.isConnected())) {
+				//System.out.println("Hostname to connect server do not found");
 				res = false;
 				oa = new OutputAction("ONOK");
 				System.out.println(oa);
 			} else
 				res = true;
 			oa = new OutputAction("OOK");
-			System.out.println(oa);
 		} catch (IOException ex) {
 			System.out.println("Can't connect to " + hostname);
 		}
@@ -78,160 +65,198 @@ public SMTP(SMTP smtp, Socket paramSocket, BufferedReader paramBufferedReader, P
 			smtpSocket.close();
 		} catch (Exception ex) {
 			// Ignore the exception. Probably the socket is not open.
+			System.out.println(ex);
 		}
 	}
 
 	// for finally sending the mesage to smtp server
-	protected String sendCommand(InputAction a) throws IOException {
+	protected synchronized String sendCommand(InputAction a) throws IOException, InterruptedException {
 		out.write(a + "\n");
-		System.out.println("command sent to server is I" + a);
 		out.flush();
-		Logger.log("I" + a);
 		String response = getResponse();
 		return response;
 	}
 
 	// getting response code
-	protected String getResponse() throws IOException {
+	protected synchronized String getResponse() throws IOException, InterruptedException {
 		String response = "";
-
 		String line;
-		do {
-			line = in.readLine();
-			if ((line == null) || (line.length() < 3)) {
-				// response should have 3- digit in response code
-				throw new IOException("Server not responding properly.");
-			}
-			response += line + "\n";
-		} while ((line.length() > 3) && (line.charAt(3) == '-'));
+		// OutputAction oa = null;
+		// Thread.sleep(10000);
+		// System.out.println(in.readLine());
+//		while ((line = in.readLine()) != null) {
+//			if (line.isEmpty()) {
+//				break;
+//			} else if (checkServerResponse(line)) {
+//				response = "OOK";
+//				break;
+//			} else {
+//				response = "ONOK";
+//				break;
+//			}
+//		}
+//		return response;
 
+		while (!((line = in.readLine()) == null))
+			
+			if (checkServerResponse(line)) {
+				//System.out.println(line);
+				response = "OOK";
+				break;
+			} else {
+				response = "ONOK";
+				break;
+			}
 		return response;
 	}
 
 	// checking the response coming from the smtp server
 	protected boolean checkServerResponse(String response) throws IOException {
 		boolean resp;
-		if (response.charAt(0) != 2) {
-			// throw new IOException(response);
-			resp = false;
-		}
 
-		else {
+		if (response.charAt(0) != '2') {
+			resp = false;
+		} else {
 			resp = true;
 		}
-
 		return resp;
 	}
 
-//	public void sendMessage() throws IOException {
-//		connect();
-//		System.out.println("connection done");
-//		getResponse();
-//		// After connecting, the SMTP server will send a response string.
-//		// Make sure it starts with a '2' (reponses in the 200's are positive).
-//		// String response = getResponse();
-//		// Introduce ourselves to the SMTP server with a polite "HELO host name"
-//		String res = sendCommand("HELO " + smtpSocket.getInetAddress().getHostAddress().toString());
-//		checkServerResponse(res);
-//		// Tell the server who this message is from
-//		sendCommand("MAIL FROM: <" + sender + ">");
-//		checkServerResponse(res);
-//
-//		// Now tell the server who we want to send a message to
-//		sendCommand("RCPT TO: <" + recipient + ">");
-//		checkServerResponse(res);
-//
-//		// Okay, now send the mail message. We expect a response beginning
-//		// with '3' indicating that the server is ready for data.
-//		sendCommand("DATA \n" + "Subject:" + subject + "\n" + message);
-//		checkServerResponse(res);
-//		sendCommand(".");
-//		checkServerResponse(res);
-//		sendCommand("quit");
-//		checkServerResponse(res);
-//
-//		BufferedReader msgBodyReader = new BufferedReader(new StringReader(message));
-//		// Send each line of the message
-//		String line;
-//		while ((line = msgBodyReader.readLine()) != null) {
-//			// If the line begins with a ".", put an extra "." in front of it.
-//			if (line.startsWith("."))
-//				out.write('.');
-//			out.write(line + "\n");
-//		}
-//
-//		// A "." on a line by itself ends a message.
-//		sendCommand(".");
-//
-//		// Message is sent. Close the connection to the server
-//		in.close();
-//		out.close();
-//		smtpSocket.close();
-//	}
+	private InputAction a;
 
-//	public void run() {
-//		System.out.println("Starting SMTP client...");
-//		try {
-//			sendMessage();
-//
-//		} catch (SocketException localSocketException) {
-//			System.out.println("Server closed connection");
-//		} catch (IOException localIOException1) {
-//			localIOException1.printStackTrace();
-//			System.out.println("reset...");
-//		}
-//		System.out.println("Closing client...");
-//	}
-private InputAction a;
-	public OutputAction IEHLO() {
+	protected synchronized boolean ehlo() throws IOException {
+		boolean res = false;
 		OutputAction oa = null;
 		try {
-			
-			Pattern pattern = Pattern.compile("^(helo .*|ehlo .*)", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
-			if (match.matches()) {
-				sendCommand(a);
-				//checkServerResponse(a);
-				oa = new OutputAction("OOK");
-
-			} else {
-				oa = new OutputAction("ONOK");
-
-			}
-
-		} catch (IOException ex) {
-			System.out.println(ex);
-		}
-		return oa;
-	}
-
-	public OutputAction IMAIL() {
-		OutputAction oa = null;
-		try {
-			Pattern pattern = Pattern.compile("^(mail from: <).*>$", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
-			if (match.matches()) {
-				String res = sendCommand(a);
-				if (checkServerResponse(res)) {
-					oa = new OutputAction("OOK");
-
-				} else {
-					oa = new OutputAction("ONOK");
-				}
-			}
+			InputAction helo = new InputAction("helo mail.shubham.personal");
+			String str = sendCommand(helo);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-		return oa;
+		return res;
+	}
+
+	protected synchronized boolean mail() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction mail = new InputAction("mail from: root@mail.shubham.personal");
+			String str = sendCommand(mail);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
+	}
+
+	protected synchronized boolean rcpt() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction rcpt = new InputAction("rcpt to: root@mail.shubham.personal");
+			String str = sendCommand(rcpt);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
+	}
+
+	protected synchronized boolean data() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction mail = new InputAction("DATA");
+			out.write(mail + "\n");
+			out.flush();
+			String line;
+			String response = "";
+			while (!((line = in.readLine()) == null)) {
+			//	System.out.println(line);
+				if (line.charAt(0) != '3') {
+					response = "ONOK";
+					break;
+				} else {
+					response = "OOK";
+					break;
+				}
+			}
+			if (response == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
+	}
+
+	protected synchronized boolean dot() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction rcpt = new InputAction(".");
+			String str = sendCommand(rcpt);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
+	}
+
+	protected synchronized boolean rset() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction rcpt = new InputAction("rset");
+			String str = sendCommand(rcpt);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
+	}
+
+	protected synchronized boolean quit() throws IOException {
+		boolean res = false;
+		OutputAction oa = null;
+		try {
+			InputAction rcpt = new InputAction("quit");
+			String str = sendCommand(rcpt);
+			if (str == "OOK")
+				res = true;
+			else
+				res = false;
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return res;
 	}
 
 	public OutputAction IRCPT() {
 		OutputAction oa = null;
+		InputAction rec = new InputAction("rcpt to: root@testserver.com");
 		try {
 			Pattern pattern = Pattern.compile("^(rcpt to: <).*>$", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
+			Matcher match = pattern.matcher((CharSequence) rec);
 			if (match.matches()) {
-				String res = sendCommand(a);
+				String res = sendCommand(rec);
 				if (checkServerResponse(res)) {
 					oa = new OutputAction("OOK");
 
@@ -268,11 +293,12 @@ private InputAction a;
 
 	public OutputAction IDOT() {
 		OutputAction oa = null;
+		InputAction ab = new InputAction(".");
 		try {
 			Pattern pattern = Pattern.compile("^(.)", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
+			Matcher match = pattern.matcher((CharSequence) ab);
 			if (match.matches()) {
-				String res = sendCommand(a);
+				String res = sendCommand(ab);
 				if (checkServerResponse(res)) {
 					oa = new OutputAction("OOK");
 

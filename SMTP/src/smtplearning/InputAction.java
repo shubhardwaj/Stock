@@ -1,7 +1,6 @@
 package smtplearning;
 
 import java.util.List;
-import java.util.Scanner;
 
 public class InputAction extends Action implements sut.interfaces.InputAction {
 

@@ -11,8 +11,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.List;
 
 import sut.interfaces.InputAction;
+import sut.interfaces.Parameter;
 //import sut.interfaces.OutputActions;
 import sut.interfaces.SutInterface;
 
@@ -27,7 +29,7 @@ public class SUT extends Thread implements SutInterface {
 	private BufferedReader sockinLL;
 	private PrintWriter sockoutLL;
 	private Socket sockLL;
-	private static boolean verbose = false;
+	private static boolean verbose = true;
 	private static int portNumber = 7892;
 	// replacing myclass with SUT
 	private SUT paramSUT;
@@ -37,10 +39,10 @@ public class SUT extends Thread implements SutInterface {
 		this.sockLL = paramSocket;
 		this.sockinLL = paramBufferedReader;
 		this.sockoutLL = paramPrintWriter;
-		}
-
-	public static void globalOut(String paramString) {
 	}
+
+	// public static void globalOut(String paramString) {
+	// }
 
 	public static void handleArgs(String[] paramArrayOfString) {
 		for (int i = 0; i < paramArrayOfString.length; i++)
@@ -91,13 +93,12 @@ public class SUT extends Thread implements SutInterface {
 			while (true) {
 				Socket localSocket;
 				try {
-					System.out.println(localServerSocket);
 					localSocket = localServerSocket.accept();
-					} 
-				catch (SocketTimeoutException localSocketTimeoutException) {
+				} catch (SocketTimeoutException localSocketTimeoutException) {
 					localServerSocket.close();
+					System.err.println(localSocketTimeoutException.getMessage());
 					break;
-					}
+				}
 				InputStream localInputStream = localSocket.getInputStream();
 				BufferedReader localBufferedReader = new BufferedReader(new InputStreamReader(localInputStream));
 				OutputStream localOutputStream = localSocket.getOutputStream();
@@ -116,38 +117,122 @@ public class SUT extends Thread implements SutInterface {
 
 	@Override
 	public OutputAction sendInput(InputAction inputAction) {
-		System.out.println("sendInput");
+		OutputAction oa = null;
 		switch (inputAction.getMethodName()) {
-		case "IConnect":
-			if (smtpServer == null)
-				smtpServer = new SMTP("192.168.175.2", 25);
-			// make it run in a separate thread ..
-			OutputAction oa = null;
-			try {
-				if (smtpServer.connect())
-					oa = new OutputAction("OOK");
-				else
+		case "IConnect":			
+			if (smtpServer == null) {
+				smtpServer = new SMTP("192.168.222.1", 25);
+				try {
+					if (smtpServer.connect())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					System.out.println(ex);
 					oa = new OutputAction("ONOK");
-				return oa;
-			} catch (IOException ex) {
-				System.out.println(ex);
-				return new OutputAction("ONOK");
+				}
 			}
+			else
+				oa= new OutputAction("ONOK");
+			break;
 		case "IEHLO":
-			return smtpServer.IEHLO();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.ehlo())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
 		case "IMAIL":
-			return smtpServer.IMAIL();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.mail())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
 		case "IRCPT":
-			return smtpServer.IRCPT();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.rcpt())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
 		case "IDATA":
-			return smtpServer.IDATA();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.data())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
 		case "IDOT":
-			return smtpServer.IDOT();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.dot())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
+		case "IRSET":
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.rset())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
 		case "IQUIT":
-			return smtpServer.IQUIT();
+			if (smtpServer == null) {
+				oa = new OutputAction("ONOK");
+			} else {
+				try {
+					if (smtpServer.quit())
+						oa = new OutputAction("OOK");
+					else
+						oa = new OutputAction("ONOK");
+				} catch (IOException ex) {
+					oa= new OutputAction("ONOK");
+				}
+			}break;
+			default:
+				oa= new OutputAction("ONOK");
 		}
-
-		return null;
+		 return oa;
+	}
+	public void reset(){
+		 System.out.println("reseting...");
 	}
 
 	public void run() {
@@ -158,6 +243,7 @@ public class SUT extends Thread implements SutInterface {
 			String str1;
 			System.out.println("input: ");
 			while ((str1 = this.sockinLL.readLine()) != null) {
+				str1 = str1.replaceAll("[^\\x30-\\x7A]", "");
 				if (verbose)
 					System.out.println("input: " + str1);
 
@@ -178,7 +264,7 @@ public class SUT extends Thread implements SutInterface {
 			}
 		} catch (SocketException localSocketException) {
 			System.out.println("Server closed connection");
-		} catch (IOException localIOException1) {
+		} catch (Exception localIOException1) {
 			localIOException1.printStackTrace();
 			System.out.println("reset...");
 		}
@@ -194,8 +280,7 @@ public class SUT extends Thread implements SutInterface {
 
 	@Override
 	public void sendReset() {
-		// TODO Auto-generated method stub
-
+		reset();
 	}
 
 }
