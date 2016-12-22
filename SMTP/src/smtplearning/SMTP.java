@@ -9,7 +9,12 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,11 +22,11 @@ import javax.swing.text.ChangedCharSetException;
 
 public class SMTP extends Thread {
 
-	public static final int SOCKET_READ_TIMEOUT = 60 * 1000;
+	public static final int SOCKET_READ_TIMEOUT = 600*1000;
 
 	private String hostname;
 	private int port;
-
+	
 	protected Socket smtpSocket;
 	protected BufferedReader in;
 	protected OutputStreamWriter out;
@@ -56,6 +61,8 @@ public class SMTP extends Thread {
 		}
 		return res;
 	}
+	// for logfile
+	
 
 	// for closing connection
 	public void close() {
@@ -75,39 +82,30 @@ public class SMTP extends Thread {
 		out.flush();
 		String response = getResponse();
 		return response;
-	}
+	}				
 
-	// getting response code
+	// getting response code									
 	protected synchronized String getResponse() throws IOException, InterruptedException {
 		String response = "";
 		String line;
-		// OutputAction oa = null;
-		// Thread.sleep(10000);
-		// System.out.println(in.readLine());
-//		while ((line = in.readLine()) != null) {
-//			if (line.isEmpty()) {
-//				break;
-//			} else if (checkServerResponse(line)) {
-//				response = "OOK";
+		while (!((line = in.readLine()) == null))
+		{ 
+			String arr[]=line.split(" ",2);
+			String a= arr[0];
+			response= a;
+			break;
+// 			if (checkServerResponse(line)) {
+//				response = a;
 //				break;
 //			} else {
-//				response = "ONOK";
+//				System.out.println(line);
+//				response = line;
 //				break;
 //			}
-//		}
-//		return response;
-
-		while (!((line = in.readLine()) == null))
-			
-			if (checkServerResponse(line)) {
-				//System.out.println(line);
-				response = "OOK";
-				break;
-			} else {
-				response = "ONOK";
-				break;
-			}
+		}
+		
 		return response;
+		
 	}
 
 	// checking the response coming from the smtp server
@@ -122,215 +120,155 @@ public class SMTP extends Thread {
 		return resp;
 	}
 
-	private InputAction a;
+	//private InputAction a;
 
-	protected synchronized boolean ehlo() throws IOException {
+	protected synchronized String ehlo() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str="" ;
 		try {
 			InputAction helo = new InputAction("helo mail.shubham.personal");
-			String str = sendCommand(helo);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(helo);
+//			if (str.contains("250"))
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception n ehlo");
 		}
-		return res;
+		return str;
 	}
 
-	protected synchronized boolean mail() throws IOException {
+	protected synchronized String mail() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str="";
 		try {
 			InputAction mail = new InputAction("mail from: root@mail.shubham.personal");
-			String str = sendCommand(mail);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(mail);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in mail");
+			
 		}
-		return res;
+		return str;
 	}
 
-	protected synchronized boolean rcpt() throws IOException {
+	protected synchronized String rcpt() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str ="";
 		try {
 			InputAction rcpt = new InputAction("rcpt to: root@mail.shubham.personal");
-			String str = sendCommand(rcpt);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(rcpt);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in rcpt");
 		}
-		return res;
+		return str;
 	}
-
-	protected synchronized boolean data() throws IOException {
+	protected synchronized String data() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str ="";
 		try {
-			InputAction mail = new InputAction("DATA");
-			out.write(mail + "\n");
-			out.flush();
-			String line;
-			String response = "";
-			while (!((line = in.readLine()) == null)) {
-			//	System.out.println(line);
-				if (line.charAt(0) != '3') {
-					response = "ONOK";
-					break;
-				} else {
-					response = "OOK";
-					break;
-				}
-			}
-			if (response == "OOK")
-				res = true;
-			else
-				res = false;
+			InputAction rcpt = new InputAction("data");
+			str = sendCommand(rcpt);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in rcpt");
 		}
-		return res;
+		return str;
 	}
 
-	protected synchronized boolean dot() throws IOException {
+//	protected synchronized boolean data() throws IOException {
+//		boolean res = false;
+//		OutputAction oa = null;
+//		try {
+//			InputAction mail = new InputAction("DATA");
+//			out.write(mail + "\n");
+//			out.flush();
+//			String line;
+//			String response = "";
+//			while (!((line = in.readLine()) == null)) {
+//			//	System.out.println(line);
+//				if (line.charAt(0) != '3') {
+//					response = "ONOK";
+//					break;
+//				} else {
+//					response = "OOK";
+//					break;
+//				}
+//			}
+//			if (response == "OOK")
+//				res = true;
+//			else
+//				res = false;
+//		} catch (Exception e) {
+//			System.out.println(e+"exception in data");
+//		}
+//		return res;
+//	}
+
+	protected synchronized String dot() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str ="";
 		try {
 			InputAction rcpt = new InputAction(".");
-			String str = sendCommand(rcpt);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(rcpt);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in dot");
 		}
-		return res;
+		return str;
 	}
 
-	protected synchronized boolean rset() throws IOException {
+	protected synchronized String rset() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str ="";
 		try {
 			InputAction rcpt = new InputAction("rset");
-			String str = sendCommand(rcpt);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(rcpt);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in rset");
 		}
-		return res;
+		return str;
 	}
 
-	protected synchronized boolean quit() throws IOException {
+	protected synchronized String quit() throws IOException {
 		boolean res = false;
 		OutputAction oa = null;
+		String str = "";
 		try {
 			InputAction rcpt = new InputAction("quit");
-			String str = sendCommand(rcpt);
-			if (str == "OOK")
-				res = true;
-			else
-				res = false;
+			str = sendCommand(rcpt);
+//			if (str == "OOK")
+//				res = true;
+//			else
+//				res = false;
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.println(e+"exception in quit");
 		}
-		return res;
+		return str;
 	}
 
-	public OutputAction IRCPT() {
-		OutputAction oa = null;
-		InputAction rec = new InputAction("rcpt to: root@testserver.com");
-		try {
-			Pattern pattern = Pattern.compile("^(rcpt to: <).*>$", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) rec);
-			if (match.matches()) {
-				String res = sendCommand(rec);
-				if (checkServerResponse(res)) {
-					oa = new OutputAction("OOK");
 
-				} else {
-					oa = new OutputAction("ONOK");
-				}
-			}
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return oa;
-	}
-
-	public OutputAction IDATA() {
-		OutputAction oa = null;
-		try {
-			Pattern pattern = Pattern.compile("^(DATA)", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
-			if (match.matches()) {
-				String res = sendCommand(a);
-				checkServerResponse(res);
-				oa = new OutputAction("OOK");
-
-			} else {
-				oa = new OutputAction("ONOK");
-
-			}
-
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return oa;
-	}
-
-	public OutputAction IDOT() {
-		OutputAction oa = null;
-		InputAction ab = new InputAction(".");
-		try {
-			Pattern pattern = Pattern.compile("^(.)", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) ab);
-			if (match.matches()) {
-				String res = sendCommand(ab);
-				if (checkServerResponse(res)) {
-					oa = new OutputAction("OOK");
-
-				} else {
-					oa = new OutputAction("ONOK");
-				}
-			}
-
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return oa;
-	}
-
-	public OutputAction IQUIT() {
-		OutputAction oa = null;
-		try {
-			Pattern pattern = Pattern.compile("^(quit)", Pattern.CASE_INSENSITIVE);
-			Matcher match = pattern.matcher((CharSequence) a);
-			if (match.matches()) {
-				String res = sendCommand(a);
-				if (checkServerResponse(res)) {
-					oa = new OutputAction("OOK");
-					close();
-				} else {
-					oa = new OutputAction("ONOK");
-
-				}
-			}
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return oa;
-	}
 }

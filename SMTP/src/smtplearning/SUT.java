@@ -11,6 +11,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.time.chrono.IsoChronology;
 import java.util.List;
 
 import sut.interfaces.InputAction;
@@ -41,8 +42,8 @@ public class SUT extends Thread implements SutInterface {
 		this.sockoutLL = paramPrintWriter;
 	}
 
-	// public static void globalOut(String paramString) {
-	// }
+	public static void globalOut(String paramString) {
+	}
 
 	public static void handleArgs(String[] paramArrayOfString) {
 		for (int i = 0; i < paramArrayOfString.length; i++)
@@ -115,130 +116,178 @@ public class SUT extends Thread implements SutInterface {
 		}
 	}
 
+	private OutputAction connect() {
+		OutputAction oa = null;
+		if (smtpServer == null) {
+			smtpServer = new SMTP("192.168.222.1", 25);
+			try {
+				if (smtpServer.connect())
+					oa = new OutputAction("OOK");
+				else
+					oa = new OutputAction("ONOK");
+			} catch (IOException ex) {
+				System.out.println(ex);
+				oa = new OutputAction("ONOK");
+			}
+		} else {
+			smtpServer.close();
+			smtpServer = new SMTP("192.168.222.1", 25);
+			oa = new OutputAction("OOK");
+			try {
+				if (smtpServer.connect())
+					oa = new OutputAction("OOK");
+				else
+					oa = new OutputAction("ONOK");
+			} catch (IOException ex) {
+				System.out.println(ex);
+				oa = new OutputAction("ONOK");
+			}
+		}
+		return oa;
+
+	}
+
 	@Override
 	public OutputAction sendInput(InputAction inputAction) {
 		OutputAction oa = null;
 		switch (inputAction.getMethodName()) {
-		case "IConnect":			
-			if (smtpServer == null) {
-				smtpServer = new SMTP("192.168.222.1", 25);
-				try {
-					if (smtpServer.connect())
-						oa = new OutputAction("OOK");
-					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					System.out.println(ex);
-					oa = new OutputAction("ONOK");
-				}
-			}
-			else
-				oa= new OutputAction("ONOK");
+		case "IConnect":
 			break;
 		case "IEHLO":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.ehlo())
-						oa = new OutputAction("OOK");
-					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+			try {
+				String p = smtpServer.ehlo();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("250")) {
+
+						oa = new OutputAction("O" + p);
+					} else
+						oa = new OutputAction("O" + p);
 				}
-			}break;
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
 		case "IMAIL":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.mail())
-						oa = new OutputAction("OOK");
+			try {
+				String p = smtpServer.mail();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("250"))
+						oa = new OutputAction("O" + p);
 					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+						oa = new OutputAction("O" + p);
 				}
-			}break;
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
 		case "IRCPT":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.rcpt())
-						oa = new OutputAction("OOK");
+			try {
+				String p = smtpServer.rcpt();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("250"))
+						oa = new OutputAction("O" + p);
+					else if (p.contains("251"))
+						oa = new OutputAction("O" + p);
 					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+						oa = new OutputAction("O" + p);
 				}
-			}break;
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
 		case "IDATA":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.data())
-						oa = new OutputAction("OOK");
+			try {
+				String p = smtpServer.data();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("354")){
+						String r= smtpServer.dot();
+						if (smtpServer == null) {
+							oa = new OutputAction("O" + r);
+						} else {
+							if (r.contains("250"))
+								oa = new OutputAction("O" + r);
+							else
+								oa = new OutputAction("O" + r);
+						}
+					}
 					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+						oa = new OutputAction("O" + p);
 				}
-			}break;
-		case "IDOT":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.dot())
-						oa = new OutputAction("OOK");
-					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
-				}
-			}break;
+
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
+//		case "IDOT":
+//			try {
+//				String p = smtpServer.dot();
+//				if (smtpServer == null) {
+//					oa = new OutputAction("O" + smtpServer.dot());
+//				} else {
+//					if (p.contains("250"))
+//						oa = new OutputAction("O" + p);
+//					else
+//						oa = new OutputAction("O" + p);
+//				}
+//			} catch (Exception e) {
+//				System.out.println(e);
+//			}
+//			break;
 		case "IRSET":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.rset())
-						oa = new OutputAction("OOK");
+			try {
+				String p = smtpServer.rset();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("250"))
+						oa = new OutputAction("O" + p);
 					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+						oa = new OutputAction("O" + p);
 				}
-			}break;
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
 		case "IQUIT":
-			if (smtpServer == null) {
-				oa = new OutputAction("ONOK");
-			} else {
-				try {
-					if (smtpServer.quit())
-						oa = new OutputAction("OOK");
-					else
-						oa = new OutputAction("ONOK");
-				} catch (IOException ex) {
-					oa= new OutputAction("ONOK");
+			try {
+				String p = smtpServer.quit();
+				if (smtpServer == null) {
+					oa = new OutputAction("O" + p);
+				} else {
+					if (p.contains("221")) {
+						oa = new OutputAction("O" + p);
+					} else
+						oa = new OutputAction("O" + p);
+					connect();
 				}
-			}break;
-			default:
-				oa= new OutputAction("ONOK");
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			break;
+		// default:
+		// oa= new OutputAction("O"+smtpServer.quit());
 		}
-		 return oa;
-	}
-	public void reset(){
-		 System.out.println("reseting...");
+		return oa;
 	}
 
+	public void reset() {
+		Thread t = new Thread();
+		t.start();
+	}
+	
 	public void run() {
 		// sut.interfaces.InputAction paramInputAction;
 		// sendInput(paramInputAction);
 		System.out.println("Starting client...");
+		System.out.println("Connecting: " + connect().toString());
 		try {
 			String str1;
 			System.out.println("input: ");
@@ -260,6 +309,7 @@ public class SUT extends Thread implements SutInterface {
 
 					this.sockoutLL.println(str2);
 					this.sockoutLL.flush();
+
 				}
 			}
 		} catch (SocketException localSocketException) {
