@@ -1,6 +1,7 @@
 package smtplearning;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,8 +12,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.sql.Timestamp;
 import java.time.chrono.IsoChronology;
 import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import sut.interfaces.InputAction;
 import sut.interfaces.Parameter;
@@ -147,7 +152,7 @@ public class SUT extends Thread implements SutInterface {
 
 	}
 
-	@Override
+	// @Override
 	public OutputAction sendInput(InputAction inputAction) {
 		OutputAction oa = null;
 		switch (inputAction.getMethodName()) {
@@ -190,10 +195,10 @@ public class SUT extends Thread implements SutInterface {
 				if (smtpServer == null) {
 					oa = new OutputAction("O" + p);
 				} else {
-					if (p.contains("250"))
+					if (p == "250" || p == "251")
 						oa = new OutputAction("O" + p);
-					else if (p.contains("251"))
-						oa = new OutputAction("O" + p);
+					// else if (p.contains("251"))
+					// oa = new OutputAction("O" + p);
 					else
 						oa = new OutputAction("O" + p);
 				}
@@ -203,12 +208,13 @@ public class SUT extends Thread implements SutInterface {
 			break;
 		case "IDATA":
 			try {
+
 				String p = smtpServer.data();
 				if (smtpServer == null) {
 					oa = new OutputAction("O" + p);
 				} else {
-					if (p.contains("354")){
-						String r= smtpServer.dot();
+					if (p.contains("354")) {
+						String r = smtpServer.dot();
 						if (smtpServer == null) {
 							oa = new OutputAction("O" + r);
 						} else {
@@ -217,8 +223,7 @@ public class SUT extends Thread implements SutInterface {
 							else
 								oa = new OutputAction("O" + r);
 						}
-					}
-					else
+					} else
 						oa = new OutputAction("O" + p);
 				}
 
@@ -226,21 +231,21 @@ public class SUT extends Thread implements SutInterface {
 				System.out.println(e);
 			}
 			break;
-//		case "IDOT":
-//			try {
-//				String p = smtpServer.dot();
-//				if (smtpServer == null) {
-//					oa = new OutputAction("O" + smtpServer.dot());
-//				} else {
-//					if (p.contains("250"))
-//						oa = new OutputAction("O" + p);
-//					else
-//						oa = new OutputAction("O" + p);
-//				}
-//			} catch (Exception e) {
-//				System.out.println(e);
-//			}
-//			break;
+		// case "IDOT":
+		// try {
+		// String p = smtpServer.dot();
+		// if (smtpServer == null) {
+		// oa = new OutputAction("O" + smtpServer.dot());
+		// } else {
+		// if (p.contains("250"))
+		// oa = new OutputAction("O" + p);
+		// else
+		// oa = new OutputAction("O" + p);
+		// }
+		// } catch (Exception e) {
+		// System.out.println(e);
+		// }
+		// break;
 		case "IRSET":
 			try {
 				String p = smtpServer.rset();
@@ -282,7 +287,7 @@ public class SUT extends Thread implements SutInterface {
 		Thread t = new Thread();
 		t.start();
 	}
-	
+
 	public void run() {
 		// sut.interfaces.InputAction paramInputAction;
 		// sendInput(paramInputAction);
@@ -293,25 +298,54 @@ public class SUT extends Thread implements SutInterface {
 			System.out.println("input: ");
 			while ((str1 = this.sockinLL.readLine()) != null) {
 				str1 = str1.replaceAll("[^\\x30-\\x7A]", "");
-				if (verbose)
-					System.out.println("input: " + str1);
-
-				if (str1.equals("reset")) {
-					if (verbose)
-						System.out.println("reset sut");
-					this.sendReset();
-				} else {
-					InputAction localInputAction = new smtplearning.InputAction(str1);
-					OutputAction localOutputAction = this.sendInput(localInputAction);
-					String str2 = localOutputAction.getValuesAsString();
-					if (verbose)
-						System.out.println("output: " + str2);
-
-					this.sockoutLL.println(str2);
-					this.sockoutLL.flush();
-
+				try {
+					String filename = "SMTPLog.log";
+					Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+					FileWriter fw = new FileWriter(filename, true);
+					// fw.write(timestamp+"\n"+" "+line+"\n");
+					// string to the file
+					// fw.close();
+					// }
+					// catch(IOException ioe)
+					// {
+					// System.err.println("IOException: " + ioe.getMessage());
+					// }
+					if (verbose) {
+						System.out.println("input: " + str1);
+						fw.write(timestamp+"--------------" + str1 + "\n");
+						//fw.close();
+					}
+					if (str1.equals("reset")) {
+						if (verbose) {
+							System.out.println("reset sut");
+						//	fw.write(timestamp+"--------------" + "reset sut" + "\n");
+							//fw.close();
+						}
+						this.sendReset();
+					} else {
+						InputAction localInputAction = new smtplearning.InputAction(str1);
+						OutputAction localOutputAction = this.sendInput(localInputAction);
+						String str2 = localOutputAction.getValuesAsString();
+						if (verbose) {
+							System.out.println("output: " + str2);
+							fw.write(timestamp+ "--------------" + str2 + "\n");
+							fw.close();
+						}
+						this.sockoutLL.println(str2);
+						this.sockoutLL.flush();
+					}
+				} catch (IOException ioe) {
+					System.err.println("IOException: " + ioe.getMessage());
 				}
+
+				// fh.close();
+				// } catch (SecurityException e1) {
+				// e1.printStackTrace();
+				// } catch (IOException e) {
+				// e.printStackTrace();
+				// }
 			}
+
 		} catch (SocketException localSocketException) {
 			System.out.println("Server closed connection");
 		} catch (Exception localIOException1) {
