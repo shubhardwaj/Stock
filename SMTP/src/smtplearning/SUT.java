@@ -13,35 +13,20 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.sql.Timestamp;
-import java.time.chrono.IsoChronology;
-import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import sut.interfaces.InputAction;
-import sut.interfaces.Parameter;
-//import sut.interfaces.OutputActions;
 import sut.interfaces.SutInterface;
 
 public class SUT extends Thread implements SutInterface {
-	// String res;
-	public SUT() {
-	}
 
 	private SMTP smtpServer;
-	private String host;
-	private int port;
 	private BufferedReader sockinLL;
 	private PrintWriter sockoutLL;
 	private Socket sockLL;
 	private static boolean verbose = true;
 	private static int portNumber = 7892;
-	// replacing myclass with SUT
-	private SUT paramSUT;
 
-	public SUT(SUT paramSUT, Socket paramSocket, BufferedReader paramBufferedReader, PrintWriter paramPrintWriter) {
-		this.paramSUT = paramSUT;
+	public SUT( Socket paramSocket, BufferedReader paramBufferedReader, PrintWriter paramPrintWriter) {
 		this.sockLL = paramSocket;
 		this.sockinLL = paramBufferedReader;
 		this.sockoutLL = paramPrintWriter;
@@ -111,7 +96,7 @@ public class SUT extends Thread implements SutInterface {
 				PrintWriter localPrintWriter = new PrintWriter(new OutputStreamWriter(localOutputStream));
 
 				System.out.println("New client...");
-				SUT localMain = new SUT(new SUT(), localSocket, localBufferedReader, localPrintWriter);
+				SUT localMain = new SUT(localSocket, localBufferedReader, localPrintWriter);
 				new Thread(localMain).start();
 			}
 
@@ -120,7 +105,7 @@ public class SUT extends Thread implements SutInterface {
 			localIOException.printStackTrace();
 		}
 	}
-
+//connection to the smtp server
 	private OutputAction connect() {
 		OutputAction oa = null;
 		if (smtpServer == null) {
@@ -151,8 +136,7 @@ public class SUT extends Thread implements SutInterface {
 		return oa;
 
 	}
-
-	// @Override
+// providing input from the client and send to the SMTP
 	public OutputAction sendInput(InputAction inputAction) {
 		OutputAction oa = null;
 		switch (inputAction.getMethodName()) {
@@ -231,21 +215,7 @@ public class SUT extends Thread implements SutInterface {
 				System.out.println(e);
 			}
 			break;
-		// case "IDOT":
-		// try {
-		// String p = smtpServer.dot();
-		// if (smtpServer == null) {
-		// oa = new OutputAction("O" + smtpServer.dot());
-		// } else {
-		// if (p.contains("250"))
-		// oa = new OutputAction("O" + p);
-		// else
-		// oa = new OutputAction("O" + p);
-		// }
-		// } catch (Exception e) {
-		// System.out.println(e);
-		// }
-		// break;
+		
 		case "IRSET":
 			try {
 				String p = smtpServer.rset();
@@ -277,39 +247,29 @@ public class SUT extends Thread implements SutInterface {
 				System.out.println(e);
 			}
 			break;
-		// default:
-		// oa= new OutputAction("O"+smtpServer.quit());
 		}
 		return oa;
 	}
-
+//reseting the thread
 	public void reset() {
 		Thread t = new Thread();
 		t.start();
 	}
 
 	public void run() {
-		// sut.interfaces.InputAction paramInputAction;
-		// sendInput(paramInputAction);
 		System.out.println("Starting client...");
 		System.out.println("Connecting: " + connect().toString());
 		try {
 			String str1;
 			System.out.println("input: ");
 			while ((str1 = this.sockinLL.readLine()) != null) {
+				//removing the ascii coming in the input while 
+				// reading line from socket
 				str1 = str1.replaceAll("[^\\x30-\\x7A]", "");
 				try {
 					String filename = "SMTPLog.log";
 					Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 					FileWriter fw = new FileWriter(filename, true);
-					// fw.write(timestamp+"\n"+" "+line+"\n");
-					// string to the file
-					// fw.close();
-					// }
-					// catch(IOException ioe)
-					// {
-					// System.err.println("IOException: " + ioe.getMessage());
-					// }
 					if (verbose) {
 						System.out.println("input: " + str1);
 						fw.write(timestamp+"--------------" + str1 + "\n");
@@ -318,8 +278,6 @@ public class SUT extends Thread implements SutInterface {
 					if (str1.equals("reset")) {
 						if (verbose) {
 							System.out.println("reset sut");
-						//	fw.write(timestamp+"--------------" + "reset sut" + "\n");
-							//fw.close();
 						}
 						this.sendReset();
 					} else {
@@ -337,15 +295,7 @@ public class SUT extends Thread implements SutInterface {
 				} catch (IOException ioe) {
 					System.err.println("IOException: " + ioe.getMessage());
 				}
-
-				// fh.close();
-				// } catch (SecurityException e1) {
-				// e1.printStackTrace();
-				// } catch (IOException e) {
-				// e.printStackTrace();
-				// }
 			}
-
 		} catch (SocketException localSocketException) {
 			System.out.println("Server closed connection");
 		} catch (Exception localIOException1) {
@@ -361,8 +311,7 @@ public class SUT extends Thread implements SutInterface {
 		}
 		System.out.println("Closing client...");
 	}
-
-	@Override
+@Override
 	public void sendReset() {
 		reset();
 	}

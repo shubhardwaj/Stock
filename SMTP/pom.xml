@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4.0.0.xsd">
-  
+
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>SMTP</groupId>
@@ -15,24 +15,24 @@
 		<metrics.version>3.1.0</metrics.version>
 		<log4j.version>1.2.17</log4j.version>
 	</properties>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>3.8.1</version>
-			</dependency>
-			<dependency>
-				<groupId>io.dropwizard.metrics</groupId>
-				<artifactId>metrics-core</artifactId>
-				<version>${metrics.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
-				<type>pom</type>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.automatalib</groupId>
+			<artifactId>automata-commons-dotutil</artifactId>
+			<version>0.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>de.learnlib</groupId>
+			<artifactId>learnlib-core</artifactId>
+			<version>0.12.0</version>
+		</dependency>
+
+
+	</dependencies>
+
 </project>
